@@ -74,10 +74,3 @@ def create_scripture_link(scripture):
 
 if __name__ == "__main__":
     main_loop()
-    # return_str = ''
-    # for abbr, content in bible_books_info.items():
-    #     book = content['name']
-    #     verse_count = sum(content['verses-by-chapter'])
-    #     return_str += f"{book}: {verse_count}\n"
-    # print(return_str)
-    # pyperclip.copy(return_str)
