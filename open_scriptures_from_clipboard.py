@@ -52,8 +52,7 @@ def parse_scripture(content: str):
     split_text = content.split()
     book = split_text[0]
     numbers = split_text[1]
-    chapter = numbers.split(":")[0]
-    verse = numbers.split(":")[1]
+    chapter, verse = numbers.split(":")
     return {'book': book, 'chapter': int(chapter), 'verse': int(verse)}
 
 def check_valid_scripture(scripture) -> bool:
