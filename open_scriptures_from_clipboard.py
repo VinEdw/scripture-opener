@@ -25,7 +25,7 @@ def main_loop():
         if status:
             old_clipboard = new_clipboard
             extraction = extract_scripture_like_pattern(old_clipboard)
-            print("Extracted Text:", extraction)
+            print("Extracted Text:", extraction.group() if extraction is not None else None)
             if extraction:
                 scripture = parse_scripture(extraction)
                 if check_valid_scripture(scripture):
@@ -41,34 +41,37 @@ def check_clipboard_change(old_content: str) -> tuple[bool, str]:
     new_content = pyperclip.paste()
     return (old_content != new_content, new_content)
 
-def extract_scripture_like_pattern(content: str):
-    scripture_pattern = re.compile("[1-3]?[A-Z][a-z]{1,3} [1-9][0-9]{0,2}:[1-9][0-9]{0,2}")
+def extract_scripture_like_pattern(content: str) -> re.Match[str]|None:
+    scripture_pattern = re.compile("(?P<book>[1-3]?[A-Z][a-z]{1,3}) (?P<chapter>[1-9][0-9]{0,2}):(?P<start>[1-9][0-9]{0,2})((-|, )(?P<end>[1-9][0-9]{0,2}))?")
     found_chunk = scripture_pattern.search(content)
-    if found_chunk:
-        return found_chunk.group()
-    return ""
+    return found_chunk
 
-def parse_scripture(content: str):
-    split_text = content.split()
-    book = split_text[0]
-    numbers = split_text[1]
-    chapter, verse = numbers.split(":")
-    return {'book': book, 'chapter': int(chapter), 'verse': int(verse)}
+def parse_scripture(content: re.Match[str]):
+    book = content.group("book")
+    chapter = int(content.group("chapter"))
+    verse_start = int(content.group("start"))
+    verse_end = content.group("end")
+    verse_end = int(verse_end) if (verse_end is not None) and (int(verse_end) > verse_start) else None
+    return {'book': book, 'chapter': chapter, 'verse_start': verse_start, 'verse_end': verse_end}
 
 def check_valid_scripture(scripture) -> bool:
     if scripture['book'] not in bible_books_info:
         return False 
     if (scripture['chapter']) > len(bible_books_info[scripture['book']]['verses-by-chapter']):
         return False
-    if scripture['verse'] > bible_books_info[scripture['book']]['verses-by-chapter'][scripture['chapter']-1]:
+    verse_max = bible_books_info[scripture['book']]['verses-by-chapter'][scripture['chapter']-1]
+    if scripture['verse_start'] > verse_max:
         return False
     return True
 
 def create_scripture_link(scripture):
     book_number = str(bible_books_info[scripture['book']]['number']).rjust(2, '0')
     chapter_number = str(scripture['chapter']).rjust(3, '0')
-    verse_number = str(scripture['verse']).rjust(3, '0')
-    scripture_number = book_number + chapter_number + verse_number
+    verse_start_number = str(scripture['verse_start']).rjust(3, '0')
+    scripture_number = book_number + chapter_number + verse_start_number
+    if scripture['verse_end'] is not None:
+        verse_end_number = str(scripture['verse_end']).rjust(3, '0')
+        scripture_number += '-' + book_number + chapter_number + verse_end_number
     return f'https://www.jw.org/finder?srcid=jwlshare&wtlocale=E&prefer=lang&bible={scripture_number}&pub=nwtsty'
 
 if __name__ == "__main__":
