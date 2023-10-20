@@ -42,7 +42,11 @@ def check_clipboard_change(old_content: str) -> tuple[bool, str]:
     return (old_content != new_content, new_content)
 
 def extract_scripture_like_pattern(content: str) -> re.Match[str]|None:
-    scripture_pattern = re.compile("(?P<book>[1-3]?[A-Z][a-z]{1,3}) (?P<chapter>[1-9][0-9]{0,2}):(?P<start>[1-9][0-9]{0,2})((-|, )(?P<end>[1-9][0-9]{0,2}))?")
+    book_part = "(?P<book>[1-3]?[A-Z][a-z]{1,3})"
+    chapter_part = "(?P<chapter>[1-9][0-9]{0,2})"
+    verse_start_part = "(?P<start>[1-9][0-9]{0,2})"
+    verse_end_part = r"((-|,\s?)(?P<end>[1-9][0-9]{0,2}))?"
+    scripture_pattern = re.compile(book_part + r"\s" + chapter_part + ":" + verse_start_part + verse_end_part)
     found_chunk = scripture_pattern.search(content)
     return found_chunk
 
